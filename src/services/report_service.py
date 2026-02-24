@@ -7,6 +7,7 @@ from src.data_loader import DataLoader
 from src.processors.contractor_processor import ContractorProcessor
 from src.processors.client_processor import ClientProcessor
 from src.exceptions import DataProcessingError
+from src.models.request_models import ConsolidatedReportRequest
 
 logger = get_logger(__name__)
 
@@ -23,12 +24,14 @@ class ReportService:
     
     def build_report_tables(
         self, 
+        request_data: ConsolidatedReportRequest,
         table_configs: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """
         Build multiple report tables based on configurations.
         
         Args:
+            request_data: Validated request data with tbl_cases and tbl_case_past
             table_configs: List of table configuration dictionaries
             
         Returns:
@@ -37,9 +40,9 @@ class ReportService:
         try:
             logger.info(f"Building {len(table_configs)} report tables")
             
-            # Load data once for all reports
-            df = self.data_loader.load_cases_data()
-            past_df = self.data_loader.load_joined_cases_data()
+            # Convert request data to DataFrames
+            df = self.data_loader.load_cases_data(request_data.tbl_cases)
+            past_df = self.data_loader.load_past_cases_data(request_data.tbl_case_past)
             
             tables = []
             
@@ -73,14 +76,14 @@ class ReportService:
         # Map table types to processor methods
         processor_map = {
             "arb_lit_contractor": lambda: self.contractor_processor.process_arb_lit_contractor(df, past_df),
-            "arb_contractor": lambda: self.contractor_processor.process_arb_contractor(),
-            "court_contractor": lambda: self.contractor_processor.process_court_contractor(),
-            "rev_arb_contractor": lambda: self.contractor_processor.process_revised_cases("Arbitration"),
-            "rev_court_contractor": lambda: self.contractor_processor.process_revised_cases("Litigation"),
-            "close_arb_contractor": lambda: self.contractor_processor.process_closed_cases("Arbitration"),
-            "close_court_contractor": lambda: self.contractor_processor.process_closed_cases("Litigation"),
-            "close_court_client": lambda: self.client_processor.process_closed_client_cases("Litigation"),
-            "arb_lit_client": lambda: self.client_processor.process_arb_lit_client(),
+            "arb_contractor": lambda: self.contractor_processor.process_arb_contractor(df, past_df),
+            "court_contractor": lambda: self.contractor_processor.process_court_contractor(df, past_df),
+            "rev_arb_contractor": lambda: self.contractor_processor.process_revised_cases(df, "Arbitration"),
+            "rev_court_contractor": lambda: self.contractor_processor.process_revised_cases(df, "Litigation"),
+            "close_arb_contractor": lambda: self.contractor_processor.process_closed_cases(df, "Arbitration"),
+            "close_court_contractor": lambda: self.contractor_processor.process_closed_cases(df, "Litigation"),
+            "close_court_client": lambda: self.client_processor.process_closed_client_cases(df, "Litigation"),
+            "arb_lit_client": lambda: self.client_processor.process_arb_lit_client(df, past_df),
         }
         
         processor = processor_map.get(table_type)

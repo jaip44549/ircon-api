@@ -23,7 +23,7 @@ class ClientProcessor(BaseProcessor):
         """
         raise NotImplementedError("Use specific processing methods")
     
-    def process_arb_lit_client(self) -> Dict[str, Any]:
+    def process_arb_lit_client(self, df: pd.DataFrame, past_df: pd.DataFrame) -> Dict[str, Any]:
         """
         Process arbitration and litigation with client data.
         
@@ -33,9 +33,6 @@ class ClientProcessor(BaseProcessor):
         try:
             self.logger.info("Processing arbitration and litigation client data")
             
-            tbl_cases = self.data_loader.load_cases_data()
-            tbl_case_past = self.data_loader.load_joined_cases_data()
-            
             data = {
                 "arbitration": {},
                 "litigation": {}
@@ -43,12 +40,12 @@ class ClientProcessor(BaseProcessor):
             
             # Process arbitration
             data["arbitration"] = self._process_client_case_type(
-                tbl_cases, tbl_case_past, "Arbitration"
+                df, past_df, "Arbitration"
             )
             
             # Process litigation
             data["litigation"] = self._process_client_case_type(
-                tbl_cases, tbl_case_past, "Litigation"
+                df, past_df, "Litigation"
             )
             
             rows = self._build_client_rows(data)
@@ -213,14 +210,12 @@ class ClientProcessor(BaseProcessor):
             ),
         ]
     
-    def process_closed_client_cases(self, case_type: str) -> Dict[str, Any]:
+    def process_closed_client_cases(self, df: pd.DataFrame, case_type: str) -> Dict[str, Any]:
         """Process closed client cases."""
         try:
             self.logger.info(f"Processing closed {case_type} client cases")
             
-            tbl_cases = self.data_loader.load_cases_data()
-            
-            filtered = self.safe_filter(tbl_cases, {
+            filtered = self.safe_filter(df, {
                 "case_type": case_type,
                 "user_type": "Client",
                 "case_status": "Closed"

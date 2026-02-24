@@ -105,34 +105,31 @@ class ContractorProcessor(BaseProcessor):
             ]
         }
     
-    def process_arb_contractor(self) -> Dict[str, Any]:
+    def process_arb_contractor(self, df: pd.DataFrame, past_df: pd.DataFrame) -> Dict[str, Any]:
         """Process arbitration contractor position summary."""
         try:
             self.logger.info("Processing arbitration contractor data")
-            
-            tbl_cases = self.data_loader.load_cases_data()
-            tbl_case_past = self.data_loader.load_joined_cases_data()
             
             data = {}
             
             # Pendency
             data["pendency"] = self._aggregate_contractor_data(
-                tbl_cases, "Arbitration", "Contractor"
+                df, "Arbitration", "Contractor"
             )
             
             # Opening
             data["opening"] = self._aggregate_contractor_data(
-                tbl_case_past, "Arbitration", "Contractor", "In Progress"
+                past_df, "Arbitration", "Contractor", "In Progress"
             )
             
             # Accretion
             data["accretion"] = self._aggregate_contractor_data(
-                tbl_case_past, "Arbitration", "Contractor", "Accreted"
+                past_df, "Arbitration", "Contractor", "Accreted"
             )
             
             # Closed
             data["closed"] = self._aggregate_contractor_data(
-                tbl_case_past, "Arbitration", "Contractor", 
+                past_df, "Arbitration", "Contractor", 
                 ["Closed", "Settled", "Awarded"]
             )
             
@@ -145,34 +142,31 @@ class ContractorProcessor(BaseProcessor):
             self.logger.error(f"Error processing arb_contractor data: {e}")
             raise DataProcessingError(f"Failed to process arb_contractor: {e}")
     
-    def process_court_contractor(self) -> Dict[str, Any]:
+    def process_court_contractor(self, df: pd.DataFrame, past_df: pd.DataFrame) -> Dict[str, Any]:
         """Process court contractor position summary."""
         try:
             self.logger.info("Processing court contractor data")
-            
-            tbl_cases = self.data_loader.load_cases_data()
-            tbl_case_past = self.data_loader.load_joined_cases_data()
             
             data = {}
             
             # Pendency
             data["pendency"] = self._aggregate_contractor_data(
-                tbl_cases, "Litigation", "Contractor"
+                df, "Litigation", "Contractor"
             )
             
             # Opening
             data["opening"] = self._aggregate_contractor_data(
-                tbl_case_past, "Litigation", "Contractor", "In Progress"
+                past_df, "Litigation", "Contractor", "In Progress"
             )
             
             # Accretion
             data["accretion"] = self._aggregate_contractor_data(
-                tbl_case_past, "Litigation", "Contractor", "Accreted"
+                past_df, "Litigation", "Contractor", "Accreted"
             )
             
             # Closed
             data["closed"] = self._aggregate_contractor_data(
-                tbl_case_past, "Litigation", "Contractor", 
+                past_df, "Litigation", "Contractor", 
                 ["Closed", "Settled", "Awarded"]
             )
             
@@ -240,6 +234,7 @@ class ContractorProcessor(BaseProcessor):
     
     def process_closed_cases(
         self, 
+        df: pd.DataFrame,
         case_type: str, 
         user_type: str = "Contractor"
     ) -> Dict[str, Any]:
@@ -247,9 +242,7 @@ class ContractorProcessor(BaseProcessor):
         try:
             self.logger.info(f"Processing closed {case_type} {user_type} cases")
             
-            tbl_cases = self.data_loader.load_cases_data()
-            
-            filtered = self.safe_filter(tbl_cases, {
+            filtered = self.safe_filter(df, {
                 "case_type": case_type,
                 "user_type": user_type,
                 "case_status": "Closed"
@@ -283,6 +276,7 @@ class ContractorProcessor(BaseProcessor):
     
     def process_revised_cases(
         self, 
+        df: pd.DataFrame,
         case_type: str, 
         user_type: str = "Contractor"
     ) -> Dict[str, Any]:
@@ -290,9 +284,7 @@ class ContractorProcessor(BaseProcessor):
         try:
             self.logger.info(f"Processing revised {case_type} {user_type} cases")
             
-            tbl_cases = self.data_loader.load_cases_data()
-            
-            filtered = self.safe_filter(tbl_cases, {
+            filtered = self.safe_filter(df, {
                 "case_type": case_type,
                 "user_type": user_type,
                 "case_status": "Accreted"
