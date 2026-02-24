@@ -9,4 +9,8 @@ python-dotenv>=1.0.0
 pymysql>=1.1.0
 cryptography>=41.0.0
 
+# PostgreSQL
+psycopg2-binary>=2.9.0
+
 # SQLite (built-in with Python, no extra package needed)
+
