@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% for table in tables %}
+    <div class="table-container">
+        {% if table.title %}
+        <h2 class="text-center">{{ table.title }}</h2>
+        {% endif %}
+        <div class="table-responsive">
+            {% if table.type == "arb_lit_contractor" %}
+                {% include "tables/arb_lit_contractor.html" %}
+            {% elif table.type == "arb_contractor" %}
+                {% include "tables/arb_contractor.html" %}
+            {% elif table.type == "rev_arb_contractor" %}
+                {% include "tables/rev_arb_contractor.html" %}
+            {% elif table.type == "close_arb_contractor" %}
+                {% include "tables/close_arb_contractor.html" %}
+            {% elif table.type == "court_contractor" %}
+                {% include "tables/arb_contractor.html" %}
+            {% elif table.type == "rev_court_contractor" %}
+                {% include "tables/rev_arb_contractor.html" %}
+            {% elif table.type == "close_court_contractor" %}
+                {% include "tables/close_court_contractor.html" %}
+            {% elif table.type == "arb_lit_client" %}
+                {% include "tables/arb_lit_client.html" %}
+            {% elif table.type == "close_court_client" %}
+                {% include "tables/close_court_contractor.html" %}
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% endblock %}

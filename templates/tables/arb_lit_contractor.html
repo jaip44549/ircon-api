@@ -1,0 +1,53 @@
+<table class="table table-bordered table-hover align-middle">
+    <thead>
+        <tr class="text-center">
+            <th colspan="2" rowspan="2"> Category</th>
+            <th colspan="2">ARBITRATION CASES</th>
+            <th colspan="2">COURT CASES</th>
+        </tr>
+        <tr class="text-center">
+            <th>Contractor's Claims</th>
+            <th>IRCON's Counter Claims</th>
+            <th>Arbitral award in favour of Contractor & Claims filed directly in court by Contractor</th>
+            <th>Award in favour of IRCON during Arbitration</th>
+        </tr>
+        <tr class="text-center">
+            <th>Quarter</th>
+            <th></th>
+            <th colspan="2">Borne By (Client + IRCON)</th>
+            <th colspan="2">Borne By (Client + IRCON)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th rowspan="2" class="text-center">Last</th>
+            <td class="fw-semibold text-center">Nos.</td>
+            <td class="text-end">{{ table.data.old_q.arb_val[0][0] }}</td>
+            <td class="text-end">{{ table.data.old_q.arb_val[0][1] }}</td>
+            <td class="text-end">{{ table.data.old_q.lit_val[0][0] }}</td>
+            <td class="text-end">{{ table.data.old_q.lit_val[0][1] }}</td>
+        </tr>
+        <tr>
+            <td class="fw-semibold text-center">Amount in Crs. (Rs)</td>
+            <td class="text-end">{{ table.data.old_q.arb_val[1][0] }}</td>
+            <td class="text-end">{{ table.data.old_q.arb_val[1][1] }}</td>
+            <td class="text-end">{{ table.data.old_q.lit_val[1][0] }}</td>
+            <td class="text-end">{{ table.data.old_q.lit_val[1][1] }}</td>
+        </tr>
+        <tr>
+            <th rowspan="2" class="text-center">Current</th>
+            <td class="fw-semibold text-center">Nos.</td>
+            <td class="text-end">{{ table.data.q.arb_val[0][0] }}</td>
+            <td class="text-end">{{ table.data.q.arb_val[0][1] }}</td>
+            <td class="text-end">{{ table.data.q.lit_val[0][0] }}</td>
+            <td class="text-end">{{ table.data.q.lit_val[0][1] }}</td>
+        </tr>
+        <tr>
+            <td class="fw-semibold text-center">Amount in Crs. (Rs)</td>
+            <td class="text-end">{{ table.data.q.arb_val[1][0] }}</td>
+            <td class="text-end">{{ table.data.q.arb_val[1][1] }}</td>
+            <td class="text-end">{{ table.data.q.lit_val[1][0] }}</td>
+            <td class="text-end">{{ table.data.q.lit_val[1][1] }}</td>
+        </tr>
+    </tbody>
+</table>

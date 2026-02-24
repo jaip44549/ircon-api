@@ -1,0 +1,45 @@
+<table class="table table-bordered table-hover align-middle">
+    <thead>
+        <tr class="text-center">
+            <th>Position</th>
+            <th colspan="4">Opening Balance as on 30.09.2025</th>
+            <th colspan="2">Accretion during Quarter</th>
+            <th colspan="2">Closed in this Quarter</th>
+            <th colspan="4">Pendency during Quarter 31.12.2025</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th class="text-center">Category</th>
+            <td></td>
+            <td>Borne by Client</td>
+            <td>Borne by Ircon</td>
+            <th>Total</th>
+            <td>Borne by Client</td>
+            <td>Borne by Ircon</td>
+            <td>Borne by Client</td>
+            <td>Borne by Ircon</td>
+            <td>Borne by Client</td>
+            <td>Borne by Ircon</td>
+            <th>Total</th>
+        </tr>
+        {% for row in table.data.rows %}
+        <tr>
+            {% if loop.index0 % 2 == 0 %}
+            <th rowspan="2">{{ row.category }}</th>
+            {% endif %}
+            <td>{{ row.metric }}</td>
+            <td class="text-end">{{ row.opening_client }}</td>
+            <td class="text-end">{{ row.opening_ircon }}</td>
+            <td class="text-end fw-bold">{{ row.opening_total }}</td>
+            <td class="text-end">{{ row.accretion_client }}</td>
+            <td class="text-end">{{ row.accretion_ircon }}</td>
+            <td class="text-end">{{ row.closed_client }}</td>
+            <td class="text-end">{{ row.closed_ircon }}</td>
+            <td class="text-end">{{ row.pendency_client }}</td>
+            <td class="text-end">{{ row.pendency_ircon }}</td>
+            <td class="text-end fw-bold">{{ row.pendency_total }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

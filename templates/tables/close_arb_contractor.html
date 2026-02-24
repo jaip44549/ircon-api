@@ -1,0 +1,31 @@
+<table class="table table-bordered table-hover align-middle">
+    <thead>
+        <tr class="text-center">
+            <th rowspan="2">Sl. No.</th>
+            <th rowspan="2">Name of Agency (M/S)</th>
+            <th rowspan="2">Case Pretain to</th>
+            <th rowspan="2">Finanical Implication</th>
+            <th colspan="2">Amount in Rs.(Cr.) Contractor</th>
+            <th colspan="2">Amount in Rs.(Cr.) IRCON</th>
+            <th rowspan="2">Remarks</th>
+        </tr>
+        <tr>
+            <th>Claims</th>
+            <th>Award</th>
+            <th>Claims</th>
+            <th>Award</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table.data.rows %}
+        <tr>
+            <td class="text-end">{{ loop.index0 + 1 }}</td>
+            {% for item in row %}
+            <td class="{% if item is number %}text-end{% else %}text-start{% endif %}">
+                {{item}}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
