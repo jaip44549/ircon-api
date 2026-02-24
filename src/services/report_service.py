@@ -42,7 +42,10 @@ class ReportService:
             
             # Convert request data to DataFrames
             df = self.data_loader.load_cases_data(request_data.tbl_cases)
-            past_df = self.data_loader.load_past_cases_data(request_data.tbl_case_past)
+            past_df = self.data_loader.load_joined_cases_data(
+                request_data.tbl_cases, 
+                request_data.tbl_case_past
+            )
             
             tables = []
             
