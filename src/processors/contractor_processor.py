@@ -112,24 +112,24 @@ class ContractorProcessor(BaseProcessor):
             
             data = {}
             
-            # Pendency
+            # Pendency (current cases with In Progress status)
             data["pendency"] = self._aggregate_contractor_data(
-                df, "Arbitration", "Contractor"
+                df, "Arbitration", "Contractor", "In Progress"
             )
             
-            # Opening
+            # Opening (past cases with In Progress status)
             data["opening"] = self._aggregate_contractor_data(
                 past_df, "Arbitration", "Contractor", "In Progress"
             )
             
-            # Accretion
+            # Accretion (current cases with Accreted status)
             data["accretion"] = self._aggregate_contractor_data(
-                past_df, "Arbitration", "Contractor", "Accreted"
+                df, "Arbitration", "Contractor", "Accreted"
             )
             
-            # Closed
+            # Closed (current cases with Closed/Settled/Awarded status)
             data["closed"] = self._aggregate_contractor_data(
-                past_df, "Arbitration", "Contractor", 
+                df, "Arbitration", "Contractor", 
                 ["Closed", "Settled", "Awarded"]
             )
             
@@ -149,24 +149,24 @@ class ContractorProcessor(BaseProcessor):
             
             data = {}
             
-            # Pendency
+            # Pendency (current cases with In Progress status)
             data["pendency"] = self._aggregate_contractor_data(
-                df, "Litigation", "Contractor"
+                df, "Litigation", "Contractor", "In Progress"
             )
             
-            # Opening
+            # Opening (past cases with In Progress status)
             data["opening"] = self._aggregate_contractor_data(
                 past_df, "Litigation", "Contractor", "In Progress"
             )
             
-            # Accretion
+            # Accretion (current cases with Accreted status)
             data["accretion"] = self._aggregate_contractor_data(
-                past_df, "Litigation", "Contractor", "Accreted"
+                df, "Litigation", "Contractor", "Accreted"
             )
             
-            # Closed
+            # Closed (current cases with Closed/Settled/Awarded status)
             data["closed"] = self._aggregate_contractor_data(
-                past_df, "Litigation", "Contractor", 
+                df, "Litigation", "Contractor", 
                 ["Closed", "Settled", "Awarded"]
             )
             

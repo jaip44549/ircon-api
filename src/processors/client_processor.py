@@ -66,26 +66,28 @@ class ClientProcessor(BaseProcessor):
         """Process client data for a specific case type."""
         data = {}
         
-        # Pendency (current cases)
+        # Pendency (current cases with In Progress status)
         filtered = self.safe_filter(tbl_cases, {
             "case_type": case_type,
-            "user_type": "Client"
+            "user_type": "Client",
+            "case_status": "In Progress"
         })
         data["pendency"] = self._extract_claim_stats(
             filtered[["ircon_claim", "client_claim"]]
         )
         
-        # Opening (past cases)
+        # Opening (past cases with In Progress status)
         filtered = self.safe_filter(tbl_case_past, {
             "case_type": case_type,
-            "user_type": "Client"
+            "user_type": "Client",
+            "case_status": "In Progress"
         })
         data["opening"] = self._extract_claim_stats(
             filtered[["ircon_claim", "client_claim"]]
         )
         
-        # Accreted
-        filtered = self.safe_filter(tbl_case_past, {
+        # Accreted (current cases with Accreted status)
+        filtered = self.safe_filter(tbl_cases, {
             "case_type": case_type,
             "user_type": "Client",
             "case_status": "Accreted"
@@ -94,8 +96,8 @@ class ClientProcessor(BaseProcessor):
             filtered[["ircon_claim", "client_claim"]]
         )
         
-        # Closed
-        filtered = self.safe_filter(tbl_case_past, {
+        # Closed (current cases with Closed status)
+        filtered = self.safe_filter(tbl_cases, {
             "case_type": case_type,
             "user_type": "Client",
             "case_status": "Closed"
