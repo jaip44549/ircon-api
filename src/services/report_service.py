@@ -39,13 +39,24 @@ class ReportService:
         """
         try:
             logger.info(f"Building {len(table_configs)} report tables")
+            logger.info(f"Received {len(request_data.tbl_cases)} cases")
             
             # Convert request data to DataFrames
             df = self.data_loader.load_cases_data(request_data.tbl_cases)
-            past_df = self.data_loader.load_joined_cases_data(
-                request_data.tbl_cases, 
-                request_data.tbl_case_past
-            )
+            
+            # Handle optional past_cases
+            if not request_data.tbl_case_past or len(request_data.tbl_case_past) == 0:
+                logger.warning("No past cases provided - opening calculations will be empty")
+                past_df = pd.DataFrame(columns=[
+                    'past_id', 'case_id', 'case_type', 'user_type', 'borne_by',
+                    'ircon_claim', 'contractor_claim', 'client_claim', 'case_status'
+                ])
+            else:
+                logger.info(f"Received {len(request_data.tbl_case_past)} past cases")
+                past_df = self.data_loader.load_joined_cases_data(
+                    request_data.tbl_cases, 
+                    request_data.tbl_case_past
+                )
             
             tables = []
             

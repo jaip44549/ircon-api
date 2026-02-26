@@ -84,11 +84,20 @@ class DataLoader:
             past_cases: List of PastCaseRecord objects
             
         Returns:
-            DataFrame with joined data
+            DataFrame with joined data (empty if past_cases is empty)
         """
         try:
-            if not past_cases or not cases:
-                logger.warning("Empty cases or past_cases list provided for join")
+            # If past_cases is empty, return empty DataFrame with expected columns
+            if not past_cases or len(past_cases) == 0:
+                logger.warning("Empty past_cases list - returning empty DataFrame for opening calculations")
+                # Return empty DataFrame with expected columns for joining
+                return pd.DataFrame(columns=[
+                    'past_id', 'case_id', 'case_type', 'user_type', 'borne_by',
+                    'ircon_claim', 'contractor_claim', 'client_claim', 'case_status'
+                ])
+            
+            if not cases or len(cases) == 0:
+                logger.warning("Empty cases list provided for join - cannot join past cases")
                 return pd.DataFrame()
             
             # Convert to DataFrames

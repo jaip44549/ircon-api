@@ -45,6 +45,14 @@ class CaseStatus(str, Enum):
     SETTLED = "Settled"
 
 
+# Custom validator to handle empty strings as None
+def empty_str_to_none(v):
+    """Convert empty strings to None."""
+    if v == "" or v is None:
+        return None
+    return v
+
+
 class CaseRecord(BaseModel):
     """Single case record from tbl_cases."""
     # Primary fields
@@ -103,6 +111,30 @@ class CaseRecord(BaseModel):
     # Timestamps
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    
+    # Validators to handle empty strings
+    @field_validator('work_status', 'user_type', 'borne_by', 'case_status', mode='before')
+    @classmethod
+    def empty_str_to_none_enum(cls, v):
+        """Convert empty strings to None for enum fields."""
+        if v == "" or v is None:
+            return None
+        return v
+    
+    @field_validator(
+        'hash_id', 'uid', 'case_pertain', 'region', 'under_jurisdiction', 
+        'loa', 'dr_no', 'work_name', 'dispute_description', 'claimant', 
+        'respondent', 'authorized_representative', 'legal_counsel', 
+        'court_case_no', 'neutral_type', 'neutral_name', 'client_arbitrator', 
+        'ircon_arbitrator', 'position_end_last_quarter', 'position_end_this_quarter',
+        mode='before'
+    )
+    @classmethod
+    def empty_str_to_none_str(cls, v):
+        """Convert empty strings to None for string fields."""
+        if v == "":
+            return None
+        return v
     
     class Config:
         """Pydantic config."""
@@ -189,6 +221,28 @@ class PastCaseRecord(BaseModel):
     created_at: Optional[datetime] = None
     case_status: Optional[CaseStatus] = Field(None, description="Status: In Progress, Awarded, Accreted, Closed, etc.")
     
+    # Validators to handle empty strings
+    @field_validator('case_status', mode='before')
+    @classmethod
+    def empty_str_to_none_enum(cls, v):
+        """Convert empty strings to None for enum fields."""
+        if v == "" or v is None:
+            return None
+        return v
+    
+    @field_validator(
+        'authorized_representative', 'legal_counsel', 'neutral_name', 
+        'client_arbitrator', 'ircon_arbitrator', 'position_end_last_quarter', 
+        'position_end_this_quarter',
+        mode='before'
+    )
+    @classmethod
+    def empty_str_to_none_str(cls, v):
+        """Convert empty strings to None for string fields."""
+        if v == "":
+            return None
+        return v
+    
     class Config:
         """Pydantic config."""
         use_enum_values = True
@@ -221,24 +275,18 @@ class PastCaseRecord(BaseModel):
 
 class ConsolidatedReportRequest(BaseModel):
     """Request model for consolidated report generation."""
-    tbl_cases: List[CaseRecord] = Field(..., description="List of current case records")
-    tbl_case_past: List[PastCaseRecord] = Field(..., description="List of past case records")
+    tbl_cases: List[CaseRecord] = Field(..., description="List of current case records (required)")
+    tbl_case_past: List[PastCaseRecord] = Field(default=[], description="List of past case records (optional)")
     
     @field_validator('tbl_cases')
     @classmethod
     def validate_tbl_cases(cls, v: List[CaseRecord]) -> List[CaseRecord]:
         """Validate tbl_cases is not empty."""
-        if not v:
-            raise ValueError("tbl_cases cannot be empty")
+        if not v or len(v) == 0:
+            raise ValueError("tbl_cases cannot be empty - at least one case record is required")
         return v
     
-    @field_validator('tbl_case_past')
-    @classmethod
-    def validate_tbl_case_past(cls, v: List[PastCaseRecord]) -> List[PastCaseRecord]:
-        """Validate tbl_case_past is not empty."""
-        if not v:
-            raise ValueError("tbl_case_past cannot be empty")
-        return v
+    # tbl_case_past is optional - no validation needed
     
     class Config:
         """Pydantic config."""
