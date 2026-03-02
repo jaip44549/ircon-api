@@ -116,8 +116,8 @@ async def health_check():
     return {"status": "healthy", "version": "2.0.0"}
 
 
-@app.post("/api/v1/report", response_class=HTMLResponse)
-@app.post("/api/v1/consolidated-report", response_class=HTMLResponse)
+@app.post("/v1/report", response_class=HTMLResponse)
+@app.post("/v1/consolidated-report", response_class=HTMLResponse)
 async def generate_consolidated_report(request: Request, request_data: ConsolidatedReportRequest):
     """
     Generate consolidated report from provided case data and return HTML.
@@ -143,7 +143,7 @@ async def generate_consolidated_report(request: Request, request_data: Consolida
         logger.error(f"Error generating consolidated report: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/v1/report/{report_type}", response_class=HTMLResponse)
+@app.post("/v1/report/{report_type}", response_class=HTMLResponse)
 async def generate_specific_report(request: Request, report_type: str, request_data: ConsolidatedReportRequest):
     """
     Generate a specific report from provided case data and return HTML.
@@ -186,8 +186,8 @@ async def generate_specific_report(request: Request, report_type: str, request_d
         raise HTTPException(status_code=500, detail=str(e))
 
 # V2 HTML endpoints (single table with quarter field)
-@app.post("/api/v2/report", response_class=HTMLResponse)
-@app.post("/api/v2/consolidated-report", response_class=HTMLResponse)
+@app.post("/v2/report", response_class=HTMLResponse)
+@app.post("/v2/consolidated-report", response_class=HTMLResponse)
 async def generate_consolidated_report_v2(request: Request, request_data: ConsolidatedReportRequest):
     """
     Generate consolidated report from provided case data (HTML response) - V2 API.
@@ -211,7 +211,7 @@ async def generate_consolidated_report_v2(request: Request, request_data: Consol
         logger.error(f"Error generating consolidated report V2: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/v2/report/{report_type}", response_class=HTMLResponse)
+@app.post("/v2/report/{report_type}", response_class=HTMLResponse)
 async def generate_specific_report_v2(request: Request, report_type: str, request_data: ConsolidatedReportRequest):
     """
     Generate a specific report from provided case data (HTML response) - V2 API.
