@@ -122,13 +122,13 @@ class ClientProcessor(BaseProcessor):
             return (0, 0.0, 0, 0.0)
         
         try:
-            ircon_count = df["ircon_claim"].count()
-            ircon_sum = df["ircon_claim"].sum()
+            ircon_count = int(df["ircon_claim"].count())
+            ircon_sum = float(df["ircon_claim"].sum())
             
             # Replace 0 with NaN for client claims to exclude from count
             client_claims = df["client_claim"].replace(0, np.nan)
-            client_count = client_claims.count()
-            client_sum = df["client_claim"].sum()
+            client_count = int(client_claims.count())
+            client_sum = float(df["client_claim"].sum())
             
             return (ircon_count, ircon_sum, client_count, client_sum)
             

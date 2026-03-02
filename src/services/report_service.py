@@ -29,9 +29,10 @@ class ReportService:
     ) -> List[Dict[str, Any]]:
         """
         Build multiple report tables based on configurations.
+        Supports both V1 (two tables) and V2 (single table with quarter) formats.
         
         Args:
-            request_data: Validated request data with tbl_cases and tbl_case_past
+            request_data: Validated request data
             table_configs: List of table configuration dictionaries
             
         Returns:
@@ -39,24 +40,42 @@ class ReportService:
         """
         try:
             logger.info(f"Building {len(table_configs)} report tables")
-            logger.info(f"Received {len(request_data.tbl_cases)} cases")
             
-            # Convert request data to DataFrames
-            df = self.data_loader.load_cases_data(request_data.tbl_cases)
-            
-            # Handle optional past_cases
-            if not request_data.tbl_case_past or len(request_data.tbl_case_past) == 0:
-                logger.warning("No past cases provided - opening calculations will be empty")
-                past_df = pd.DataFrame(columns=[
-                    'past_id', 'case_id', 'case_type', 'user_type', 'borne_by',
-                    'ircon_claim', 'contractor_claim', 'client_claim', 'case_status'
-                ])
+            # Detect format and load data accordingly
+            if request_data.is_v2_format():
+                # V2 format: Single table with quarter field
+                logger.info(f"Using V2 format (single table with quarter)")
+                logger.info(f"Received {len(request_data.tbl_cases)} total case records")
+                
+                df = self.data_loader.load_cases_data(request_data.tbl_cases, quarter="QC")
+                past_df = self.data_loader.load_cases_data(request_data.tbl_cases, quarter="QL")
+                
+                logger.info(f"Current quarter (QC): {len(df)} records")
+                logger.info(f"Last quarter (QL): {len(past_df)} records")
+                
+                if past_df.empty:
+                    logger.warning("No last quarter (QL) data - opening calculations will be empty")
+                    
             else:
-                logger.info(f"Received {len(request_data.tbl_case_past)} past cases")
-                past_df = self.data_loader.load_joined_cases_data(
-                    request_data.tbl_cases, 
-                    request_data.tbl_case_past
-                )
+                # V1 format: Two separate tables
+                logger.info(f"Using V1 format (two separate tables)")
+                logger.info(f"Received {len(request_data.tbl_cases)} cases")
+                
+                df = self.data_loader.load_cases_data(request_data.tbl_cases)
+                
+                # Handle optional past_cases
+                if not request_data.tbl_case_past or len(request_data.tbl_case_past) == 0:
+                    logger.warning("No past cases provided - opening calculations will be empty")
+                    past_df = pd.DataFrame(columns=[
+                        'past_id', 'case_id', 'case_type', 'user_type', 'borne_by',
+                        'ircon_claim', 'contractor_claim', 'client_claim', 'case_status'
+                    ])
+                else:
+                    logger.info(f"Received {len(request_data.tbl_case_past)} past cases")
+                    past_df = self.data_loader.load_joined_cases_data(
+                        request_data.tbl_cases, 
+                        request_data.tbl_case_past
+                    )
             
             tables = []
             
@@ -107,6 +126,9 @@ class ReportService:
             return None
         
         data = processor()
+        
+        # Convert numpy types to Python native types for JSON serialization
+        data = self.contractor_processor.convert_numpy_types(data)
         
         # Map display table type for templates
         display_type_map = {

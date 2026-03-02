@@ -12,7 +12,6 @@ from src.services.report_service import ReportService
 from src.logger import get_logger
 from src.exceptions import BaseAppException
 from src.models.request_models import ConsolidatedReportRequest
-from src.models.response_models import ReportResponse, ErrorResponse, HealthResponse
 
 logger = get_logger(__name__)
 
@@ -42,10 +41,10 @@ async def app_exception_handler(request: Request, exc: BaseAppException):
     logger.error(f"Application error: {exc}")
     return JSONResponse(
         status_code=500,
-        content=ErrorResponse(
-            error=str(exc),
-            type=exc.__class__.__name__
-        ).model_dump()
+        content={
+            "error": str(exc),
+            "type": exc.__class__.__name__
+        }
     )
 
 
@@ -55,10 +54,10 @@ async def general_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unexpected error: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
-        content=ErrorResponse(
-            error="Internal server error",
-            detail=str(exc)
-        ).model_dump()
+        content={
+            "error": "Internal server error",
+            "detail": str(exc)
+        }
     )
 
 
@@ -110,24 +109,27 @@ def get_table_configs(report_type: str = "all") -> List[Dict[str, Any]]:
     return [config] if config else []
 
 
-@app.get("/health", response_model=HealthResponse)
+@app.get("/health")
 async def health_check():
     """Health check endpoint."""
     logger.info("Health check requested")
-    return HealthResponse(status="healthy", version="2.0.0")
+    return {"status": "healthy", "version": "2.0.0"}
 
 
-@app.post("/report", response_class=HTMLResponse)
-@app.post("/consolidated-report", response_class=HTMLResponse)
+@app.post("/api/v1/report", response_class=HTMLResponse)
+@app.post("/api/v1/consolidated-report", response_class=HTMLResponse)
 async def generate_consolidated_report(request: Request, request_data: ConsolidatedReportRequest):
     """
     Generate consolidated report from provided case data and return HTML.
     
-    This endpoint accepts case data in JSON format and generates all reports as HTML.
+    Supports both V1 (two tables) and V2 (single table with quarter) formats.
     """
     try:
-        logger.info("Generating consolidated report")
-        logger.info(f"Received {len(request_data.tbl_cases)} cases and {len(request_data.tbl_case_past)} past cases")
+        logger.info("Generating consolidated report (HTML)")
+        if request_data.is_v2_format():
+            logger.info(f"V2 format: Received {len(request_data.tbl_cases)} cases with quarter field")
+        else:
+            logger.info(f"V1 format: Received {len(request_data.tbl_cases)} cases and {len(request_data.tbl_case_past or [])} past cases")
         
         table_configs = get_table_configs("all")
         tables = report_service.build_report_tables(request_data, table_configs)
@@ -141,11 +143,13 @@ async def generate_consolidated_report(request: Request, request_data: Consolida
         logger.error(f"Error generating consolidated report: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/report/{report_type}", response_class=HTMLResponse)
+@app.post("/api/v1/report/{report_type}", response_class=HTMLResponse)
 async def generate_specific_report(request: Request, report_type: str, request_data: ConsolidatedReportRequest):
     """
     Generate a specific report from provided case data and return HTML.
     
+    Supports both V1 (two tables) and V2 (single table with quarter) formats.
+    
     Available report types:
     - arb-lit-contractor
     - arb-contractor
@@ -158,7 +162,7 @@ async def generate_specific_report(request: Request, report_type: str, request_d
     - close-court-client
     """
     try:
-        logger.info(f"Generating report: {report_type}")
+        logger.info(f"Generating report (HTML): {report_type}")
         
         # Convert URL format to config key
         config_key = report_type.replace("-", "_")
@@ -181,37 +185,39 @@ async def generate_specific_report(request: Request, report_type: str, request_d
         logger.error(f"Error generating report '{report_type}': {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# JSON API endpoints for programmatic access
-@app.post("/api/report", response_model=ReportResponse)
-@app.post("/api/consolidated-report", response_model=ReportResponse)
-async def generate_consolidated_report_json(request_data: ConsolidatedReportRequest):
+# V2 HTML endpoints (single table with quarter field)
+@app.post("/api/v2/report", response_class=HTMLResponse)
+@app.post("/api/v2/consolidated-report", response_class=HTMLResponse)
+async def generate_consolidated_report_v2(request: Request, request_data: ConsolidatedReportRequest):
     """
-    Generate consolidated report from provided case data (JSON response).
+    Generate consolidated report from provided case data (HTML response) - V2 API.
     
-    This endpoint accepts case data in JSON format and returns JSON response.
-    Use this for API integrations.
+    V2 uses single table with quarter column (QC/QL) instead of separate tables.
+    Returns HTML report.
     """
     try:
-        logger.info("Generating consolidated report (JSON)")
-        logger.info(f"Received {len(request_data.tbl_cases)} cases and {len(request_data.tbl_case_past)} past cases")
+        logger.info("Generating consolidated report V2 (HTML)")
+        logger.info(f"Received {len(request_data.tbl_cases)} cases")
         
         table_configs = get_table_configs("all")
         tables = report_service.build_report_tables(request_data, table_configs)
         
-        return ReportResponse(
-            success=True,
-            message="Report generated successfully",
-            tables=tables,
-            total_tables=len(tables)
+        return templates.TemplateResponse(
+            request=request,
+            name="report.html",
+            context={"tables": tables}
         )
     except Exception as e:
-        logger.error(f"Error generating consolidated report: {e}")
+        logger.error(f"Error generating consolidated report V2: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/report/{report_type}", response_model=ReportResponse)
-async def generate_specific_report_json(report_type: str, request_data: ConsolidatedReportRequest):
+@app.post("/api/v2/report/{report_type}", response_class=HTMLResponse)
+async def generate_specific_report_v2(request: Request, report_type: str, request_data: ConsolidatedReportRequest):
     """
-    Generate a specific report from provided case data (JSON response).
+    Generate a specific report from provided case data (HTML response) - V2 API.
+    
+    V2 uses single table with quarter column (QC/QL) instead of separate tables.
+    Returns HTML report.
     
     Available report types:
     - arb-lit-contractor
@@ -223,11 +229,9 @@ async def generate_specific_report_json(report_type: str, request_data: Consolid
     - close-court-contractor
     - arb-lit-client
     - close-court-client
-    
-    Use this for API integrations.
     """
     try:
-        logger.info(f"Generating report (JSON): {report_type}")
+        logger.info(f"Generating report V2 (HTML): {report_type}")
         
         # Convert URL format to config key
         config_key = report_type.replace("-", "_")
@@ -239,14 +243,13 @@ async def generate_specific_report_json(report_type: str, request_data: Consolid
         
         tables = report_service.build_report_tables(request_data, table_configs)
         
-        return ReportResponse(
-            success=True,
-            message=f"Report '{report_type}' generated successfully",
-            tables=tables,
-            total_tables=len(tables)
+        return templates.TemplateResponse(
+            request=request,
+            name="report.html",
+            context={"tables": tables}
         )
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error generating report '{report_type}': {e}")
+        logger.error(f"Error generating report V2 '{report_type}': {e}")
         raise HTTPException(status_code=500, detail=str(e))

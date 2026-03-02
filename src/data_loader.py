@@ -1,5 +1,5 @@
 """Data loading operations from request data."""
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import pandas as pd
 
 from src.logger import get_logger
@@ -16,12 +16,13 @@ class DataLoader:
         """Initialize data loader."""
         logger.info("DataLoader initialized")
     
-    def load_cases_data(self, cases: List[CaseRecord]) -> pd.DataFrame:
+    def load_cases_data(self, cases: List[CaseRecord], quarter: Optional[str] = None) -> pd.DataFrame:
         """
         Convert case records to DataFrame.
         
         Args:
             cases: List of CaseRecord objects
+            quarter: Optional quarter filter ("QC" for current, "QL" for last) - V2 API only
             
         Returns:
             DataFrame with cases data
@@ -35,7 +36,13 @@ class DataLoader:
             data = [case.model_dump() for case in cases]
             df = pd.DataFrame(data)
             
-            logger.info(f"Loaded {len(df)} case records")
+            # Filter by quarter if specified (V2 API)
+            if quarter and 'quarter' in df.columns:
+                df_filtered = df[df['quarter'] == quarter].copy()
+                logger.info(f"Loaded {len(df_filtered)} case records for quarter {quarter} (V2 format)")
+                return df_filtered
+            
+            logger.info(f"Loaded {len(df)} case records (V1 format)")
             return df
             
         except Exception as e:

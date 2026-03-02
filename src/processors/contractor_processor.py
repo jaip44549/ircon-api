@@ -90,14 +90,14 @@ class ContractorProcessor(BaseProcessor):
         
         return {
             "old_q": [
-                (len(past), len(p_ircon_cases)),
+                (int(len(past)), int(len(p_ircon_cases))),
                 (
                     self.format_currency(p_client_cases["contractor_claim"].sum()),
                     self.format_currency(p_ircon_cases["ircon_claim"].sum())
                 )
             ],
             "q": [
-                (len(current), len(ircon_cases)),
+                (int(len(current)), int(len(ircon_cases))),
                 (
                     self.format_currency(client_cases["contractor_claim"].sum()),
                     self.format_currency(ircon_cases["ircon_claim"].sum())

@@ -111,7 +111,10 @@ class BaseProcessor(ABC):
             result['total'] = result.get('Client', 0) + result.get('Ircon', 0)
             
             self.logger.debug(f"Aggregation completed successfully")
-            return result.to_dict()
+            
+            # Convert to dict and then convert numpy types to Python native types
+            result_dict = result.to_dict()
+            return self.convert_numpy_types(result_dict)
             
         except Exception as e:
             self.logger.error(f"Error in aggregation: {e}")
@@ -158,3 +161,28 @@ class BaseProcessor(ABC):
         except (ValueError, TypeError):
             self.logger.warning(f"Invalid currency value: {value}")
             return f"₹0.00"
+    
+    def convert_numpy_types(self, obj: Any) -> Any:
+        """
+        Recursively convert numpy types to Python native types for JSON serialization.
+        
+        Args:
+            obj: Object to convert (can be dict, list, numpy type, etc.)
+            
+        Returns:
+            Object with numpy types converted to Python native types
+        """
+        if isinstance(obj, dict):
+            return {key: self.convert_numpy_types(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [self.convert_numpy_types(item) for item in obj]
+        elif isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif pd.isna(obj):
+            return None
+        else:
+            return obj

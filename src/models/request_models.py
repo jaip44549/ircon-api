@@ -45,12 +45,10 @@ class CaseStatus(str, Enum):
     SETTLED = "Settled"
 
 
-# Custom validator to handle empty strings as None
-def empty_str_to_none(v):
-    """Convert empty strings to None."""
-    if v == "" or v is None:
-        return None
-    return v
+class Quarter(str, Enum):
+    """Quarter enum for V2 API."""
+    QC = "QC"  # Current Quarter
+    QL = "QL"  # Last Quarter
 
 
 class CaseRecord(BaseModel):
@@ -59,6 +57,9 @@ class CaseRecord(BaseModel):
     id: Optional[int] = None
     hash_id: Optional[str] = None
     uid: Optional[str] = None
+    
+    # Quarter identifier (OPTIONAL - only for V2 API)
+    quarter: Optional[Quarter] = Field(None, description="Quarter: QC (Current) or QL (Last) - V2 API only")
     
     # Case details
     case_pertain: Optional[str] = None
@@ -276,7 +277,7 @@ class PastCaseRecord(BaseModel):
 class ConsolidatedReportRequest(BaseModel):
     """Request model for consolidated report generation."""
     tbl_cases: List[CaseRecord] = Field(..., description="List of current case records (required)")
-    tbl_case_past: List[PastCaseRecord] = Field(default=[], description="List of past case records (optional)")
+    tbl_case_past: Optional[List[PastCaseRecord]] = Field(default=None, description="List of past case records (optional - V1 API only)")
     
     @field_validator('tbl_cases')
     @classmethod
@@ -286,7 +287,13 @@ class ConsolidatedReportRequest(BaseModel):
             raise ValueError("tbl_cases cannot be empty - at least one case record is required")
         return v
     
-    # tbl_case_past is optional - no validation needed
+    def is_v2_format(self) -> bool:
+        """Check if request is in V2 format (has quarter field)."""
+        return any(case.quarter is not None for case in self.tbl_cases)
+    
+    def is_v1_format(self) -> bool:
+        """Check if request is in V1 format (has tbl_case_past)."""
+        return self.tbl_case_past is not None and len(self.tbl_case_past) > 0
     
     class Config:
         """Pydantic config."""
