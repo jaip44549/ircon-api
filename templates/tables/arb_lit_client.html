@@ -6,22 +6,28 @@
             <th>Opening Balance</th>
             <th>Accretion during Quarter</th>
             <th>Closed during Quarter</th>
-            <th>Pendency at the end of  Quarter</th>
+            <th>Pendency at the end of Quarter</th>
         </tr>
     </thead>
     <tbody>
+        {% if table.data.rows %}
         {% for row in table.data.rows %}
         <tr>
             {% if loop.index0 % 4 == 0 %}
-                <th rowspan="4">{{row[0]}}</th>
+            <th rowspan="4">{{row[0]}}</th>
             {% endif %}
             {% for item in row[1:] %}
-                <td class="{% if item is number %}text-end{% else %}text-start{% endif %}">
-                    {{item}}
-                </td>
+            <td class="{% if item is number %}text-end{% else %}text-start{% endif %}">
+                {{item}}
+            </td>
             {% endfor %}
-            
+
         </tr>
         {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="6" class="text-center text-muted py-4">No records found.</td>
+        </tr>
+        {% endif %}
     </tbody>
 </table>

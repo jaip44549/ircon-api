@@ -11,6 +11,7 @@
         </tr>
     </thead>
     <tbody>
+        {% if table.data.rows %}
         {% for row in table.data.rows %}
         <tr>
             <td class="text-end">{{ loop.index0 + 1 }}</td>
@@ -21,5 +22,10 @@
             {% endfor %}
         </tr>
         {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="7" class="text-center text-muted py-4">No records found.</td>
+        </tr>
+        {% endif %}
     </tbody>
 </table>
