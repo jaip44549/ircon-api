@@ -375,7 +375,9 @@ async def generate_specific_report_v2(request: Request, report_type: str, reques
         return templates.TemplateResponse(
             request=request,
             name="report.html",
-            conteception:
+            context={"tables": tables, "pdf_url": pdf_url}
+        )
+    except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error generating report V2 '{report_type}': {e}")
