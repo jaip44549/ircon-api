@@ -7,6 +7,8 @@ from typing import List, Dict, Any
 import uuid
 import os
 import tempfile
+import time
+import asyncio
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -23,7 +25,15 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     """Handle application startup and shutdown."""
     logger.info("Application starting up...")
+
+    async def _periodic_cleanup():
+        while True:
+            await asyncio.sleep(300)  # run every 5 minutes
+            _cleanup_pdf_store()
+
+    task = asyncio.create_task(_periodic_cleanup())
     yield
+    task.cancel()
     logger.info("Application shutting down...")
 
 
@@ -37,8 +47,30 @@ app = FastAPI(
 templates = Jinja2Templates(directory="templates")
 report_service = ReportService()
 
-# In-memory store for temporary PDF files: token -> file path
-_pdf_store: Dict[str, str] = {}
+# In-memory store for temporary PDF files: token -> (file_path, expires_at)
+_PDF_TTL = 600  # seconds (10 minutes)
+_pdf_store: Dict[str, tuple[str, float]] = {}
+
+
+def _store_pdf(file_path: str) -> str:
+    """Store a PDF path with a TTL and return its access token."""
+    token = str(uuid.uuid4())
+    _pdf_store[token] = (file_path, time.monotonic() + _PDF_TTL)
+    return token
+
+
+def _cleanup_pdf_store() -> None:
+    """Remove expired entries and delete their temp files from disk."""
+    now = time.monotonic()
+    expired = [t for t, (_, exp) in _pdf_store.items() if now > exp]
+    for token in expired:
+        file_path, _ = _pdf_store.pop(token)
+        try:
+            os.unlink(file_path)
+        except OSError:
+            pass
+    if expired:
+        logger.info(f"PDF store: cleaned up {len(expired)} expired entries")
 
 
 @app.exception_handler(BaseAppException)
@@ -195,8 +227,12 @@ async def generate_specific_report(request: Request, report_type: str, request_d
 @app.get("/v2/report/pdf/{token}")
 async def download_pdf(token: str):
     """Download a previously generated PDF report by token."""
-    file_path = _pdf_store.get(token)
-    if not file_path or not os.path.exists(file_path):
+    entry = _pdf_store.get(token)
+    if not entry:
+        raise HTTPException(status_code=404, detail="PDF not found or expired")
+    file_path, expires_at = entry
+    if time.monotonic() > expires_at or not os.path.exists(file_path):
+        _pdf_store.pop(token, None)
         raise HTTPException(status_code=404, detail="PDF not found or expired")
     return FileResponse(
         path=file_path,
@@ -281,8 +317,7 @@ async def generate_consolidated_report_v2(request: Request, request_data: Consol
 
         # Generate PDF and store with a token
         raw_html = templates.get_template("report.html").render({"tables": tables, "request": request})
-        token = str(uuid.uuid4())
-        _pdf_store[token] = _generate_pdf(raw_html)
+        token = _store_pdf(_generate_pdf(raw_html))
         pdf_url = str(request.url_for("download_pdf", token=token))
 
         return templates.TemplateResponse(
@@ -328,8 +363,7 @@ async def generate_specific_report_v2(request: Request, report_type: str, reques
 
         # Generate PDF and store with a token
         raw_html = templates.get_template("report.html").render({"tables": tables, "request": request})
-        token = str(uuid.uuid4())
-        _pdf_store[token] = _generate_pdf(raw_html)
+        token = _store_pdf(_generate_pdf(raw_html))
         pdf_url = str(request.url_for("download_pdf", token=token))
 
         return templates.TemplateResponse(
