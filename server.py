@@ -41,7 +41,8 @@ app = FastAPI(
     title="Case Management Reporting System",
     description="Production-ready case management and reporting API",
     version="2.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    root_path="/api/legal-intelligence"
 )
 
 templates = Jinja2Templates(directory="templates")
@@ -224,7 +225,7 @@ async def generate_specific_report(request: Request, report_type: str, request_d
         raise HTTPException(status_code=500, detail=str(e))
 
 # V2 HTML endpoints (single table with quarter field)
-@app.get("/v2/report/pdf/{token}")
+@app.get("/v2/report/pdf/{token}.pdf")
 async def download_pdf(token: str):
     """Download a previously generated PDF report by token."""
     entry = _pdf_store.get(token)
@@ -237,7 +238,8 @@ async def download_pdf(token: str):
     return FileResponse(
         path=file_path,
         media_type="application/pdf",
-        filename="report.pdf"
+        filename="report.pdf",
+        headers={"Content-Disposition": "attachment; filename=report.pdf"}
     )
 
 
@@ -318,7 +320,9 @@ async def generate_consolidated_report_v2(request: Request, request_data: Consol
         # Generate PDF and store with a token
         raw_html = templates.get_template("report.html").render({"tables": tables, "request": request})
         token = _store_pdf(_generate_pdf(raw_html))
-        pdf_url = str(request.url_for("download_pdf", token=token))
+        base_url = str(request.base_url).rstrip("/")
+        root_path = request.scope.get("root_path", "").rstrip("/")
+        pdf_url = f"{base_url}{root_path}/v2/report/pdf/{token}.pdf"
 
         return templates.TemplateResponse(
             request=request,
@@ -364,14 +368,14 @@ async def generate_specific_report_v2(request: Request, report_type: str, reques
         # Generate PDF and store with a token
         raw_html = templates.get_template("report.html").render({"tables": tables, "request": request})
         token = _store_pdf(_generate_pdf(raw_html))
-        pdf_url = str(request.url_for("download_pdf", token=token))
+        base_url = str(request.base_url).rstrip("/")
+        root_path = request.scope.get("root_path", "").rstrip("/")
+        pdf_url = f"{base_url}{root_path}/v2/report/pdf/{token}.pdf"
 
         return templates.TemplateResponse(
             request=request,
             name="report.html",
-            context={"tables": tables, "pdf_url": pdf_url}
-        )
-    except HTTPException:
+            conteception:
         raise
     except Exception as e:
         logger.error(f"Error generating report V2 '{report_type}': {e}")
