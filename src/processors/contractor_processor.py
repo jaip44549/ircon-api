@@ -249,20 +249,13 @@ class ContractorProcessor(BaseProcessor):
             })
             
             if case_type == "Litigation":
-                filtered["contractor_claim_or_award"] = (
-                    filtered["contractor_claim"].astype(str) + " " + 
-                    filtered["award_amount_contractor"].astype(str)
-                )
-                filtered["ircon_claim_or_award"] = (
-                    filtered["ircon_claim"].astype(str) + " " + 
-                    filtered["award_amount_ircon"].astype(str)
-                )
+                filtered["contractor_claim_or_award"] = filtered["contractor_claim"].astype(str)
+                filtered["ircon_claim_or_award"] = filtered["ircon_claim"].astype(str)
                 columns = ["claimant", "case_pertain", "borne_by", 
                           "contractor_claim_or_award", "ircon_claim_or_award"]
             else:
                 columns = ["claimant", "case_pertain", "borne_by", 
-                          "contractor_claim", "award_amount_contractor", 
-                          "ircon_claim", "award_amount_ircon"]
+                          "contractor_claim", "ircon_claim"]
             
             result = filtered[columns].copy()
             result["remarks"] = ""
@@ -291,14 +284,8 @@ class ContractorProcessor(BaseProcessor):
             })
             
             if case_type == "Litigation":
-                filtered["contractor_claim_or_award"] = (
-                    filtered["contractor_claim"].astype(str) + " " + 
-                    filtered["award_amount_contractor"].astype(str)
-                )
-                filtered["ircon_claim_or_award"] = (
-                    filtered["ircon_claim"].astype(str) + " " + 
-                    filtered["award_amount_ircon"].astype(str)
-                )
+                filtered["contractor_claim_or_award"] = filtered["contractor_claim"].astype(str)
+                filtered["ircon_claim_or_award"] = filtered["ircon_claim"].astype(str)
                 columns = ["claimant", "case_pertain", "borne_by", 
                           "contractor_claim_or_award", "ircon_claim_or_award"]
             else:

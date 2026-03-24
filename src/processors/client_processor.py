@@ -223,14 +223,8 @@ class ClientProcessor(BaseProcessor):
                 "case_status": "Closed"
             })
             
-            filtered["contractor_claim_or_award"] = (
-                filtered["contractor_claim"].astype(str) + " " + 
-                filtered["award_amount_contractor"].astype(str)
-            )
-            filtered["ircon_claim_or_award"] = (
-                filtered["ircon_claim"].astype(str) + " " + 
-                filtered["award_amount_ircon"].astype(str)
-            )
+            filtered["contractor_claim_or_award"] = filtered["contractor_claim"].astype(str)
+            filtered["ircon_claim_or_award"] = filtered["ircon_claim"].astype(str)
             
             result = filtered[[
                 "claimant", "case_pertain", "borne_by",

@@ -90,7 +90,7 @@ class CaseRecord(BaseModel):
     neutral_name: Optional[str] = None
     client_arbitrator: Optional[str] = None
     ircon_arbitrator: Optional[str] = None
-    appointed_by: Optional[date] = None
+    appointed_by: Optional[str] = None
     
     # Financial claims
     client_claim: float = Field(default=0.0, description="Client's claim amount")
@@ -98,9 +98,9 @@ class CaseRecord(BaseModel):
     contractor_claim: float = Field(default=0.0, description="Contractor's claim amount")
     
     # Award amounts
-    award_amount_client: float = Field(default=0.0, description="Award amount for client")
-    award_amount_ircon: float = Field(default=0.0, description="Award amount for IRCON")
-    award_amount_contractor: float = Field(default=0.0, description="Award amount for contractor")
+    # award_amount_client: float = Field(default=0.0, description="Award amount for client")
+    # award_amount_ircon: float = Field(default=0.0, description="Award amount for IRCON")
+    # award_amount_contractor: float = Field(default=0.0, description="Award amount for contractor")
     
     # Status and positions
     case_status: Optional[CaseStatus] = Field(None, description="Current status of the case")
@@ -172,9 +172,9 @@ class CaseRecord(BaseModel):
                 "client_claim": 0.0,
                 "ircon_claim": 150.5,
                 "contractor_claim": 200.0,
-                "award_amount_client": 0.0,
-                "award_amount_ircon": 0.0,
-                "award_amount_contractor": 0.0,
+                # "award_amount_client": 0.0,
+                # "award_amount_ircon": 0.0,
+                # "award_amount_contractor": 0.0,
                 "case_status": "In Progress",
                 "position_end_last_quarter": "Hearing scheduled",
                 "past_date_hearing": "2023-06-15",
@@ -200,7 +200,7 @@ class PastCaseRecord(BaseModel):
     neutral_name: Optional[str] = None
     client_arbitrator: Optional[str] = None
     ircon_arbitrator: Optional[str] = None
-    appointed_by: Optional[date] = None
+    appointed_by: Optional[str] = None
     
     # Financial claims
     client_claim: float = Field(default=0.0, description="Client's claim amount")
@@ -208,9 +208,9 @@ class PastCaseRecord(BaseModel):
     contractor_claim: float = Field(default=0.0, description="Contractor's claim amount")
     
     # Award amounts
-    award_amount_client: float = Field(default=0.0, description="Award amount for client")
-    award_amount_ircon: float = Field(default=0.0, description="Award amount for IRCON")
-    award_amount_contractor: float = Field(default=0.0, description="Award amount for contractor")
+    # award_amount_client: float = Field(default=0.0, description="Award amount for client")
+    # award_amount_ircon: float = Field(default=0.0, description="Award amount for IRCON")
+    # award_amount_contractor: float = Field(default=0.0, description="Award amount for contractor")
     
     # Position tracking
     position_end_last_quarter: Optional[str] = None
@@ -261,9 +261,9 @@ class PastCaseRecord(BaseModel):
                 "client_claim": 0.0,
                 "ircon_claim": 150.5,
                 "contractor_claim": 200.0,
-                "award_amount_client": 0.0,
-                "award_amount_ircon": 0.0,
-                "award_amount_contractor": 0.0,
+                # "award_amount_client": 0.0,
+                # "award_amount_ircon": 0.0,
+                # "award_amount_contractor": 0.0,
                 "position_end_last_quarter": "Hearing scheduled",
                 "past_date_hearing": "2023-06-15",
                 "position_end_this_quarter": "Arguments completed",
@@ -311,8 +311,8 @@ class ConsolidatedReportRequest(BaseModel):
                         "case_status": "In Progress",
                         "claimant": "ABC Contractors Ltd",
                         "case_pertain": "Project XYZ",
-                        "award_amount_contractor": 0.0,
-                        "award_amount_ircon": 0.0
+                        # "award_amount_contractor": 0.0,
+                        # "award_amount_ircon": 0.0
                     }
                 ],
                 "tbl_case_past": [
