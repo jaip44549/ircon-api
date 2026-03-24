@@ -1,3 +1,10 @@
 <div class="container-xl py-4">
+    {% if pdf_url %}
+    <div class="mb-3 text-end btn">
+        <a href="{{ pdf_url }}" target="_blank" class="btn btn-outline-danger btn-sm">
+            &#x1F4C4; Download PDF
+        </a>
+    </div>
+    {% endif %}
     {% block content %}{% endblock %}
 </div>

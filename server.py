@@ -1,9 +1,12 @@
 """FastAPI application for case management reporting system."""
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 from typing import List, Dict, Any
+import uuid
+import os
+import tempfile
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -33,6 +36,9 @@ app = FastAPI(
 
 templates = Jinja2Templates(directory="templates")
 report_service = ReportService()
+
+# In-memory store for temporary PDF files: token -> file path
+_pdf_store: Dict[str, str] = {}
 
 
 @app.exception_handler(BaseAppException)
@@ -186,6 +192,77 @@ async def generate_specific_report(request: Request, report_type: str, request_d
         raise HTTPException(status_code=500, detail=str(e))
 
 # V2 HTML endpoints (single table with quarter field)
+@app.get("/v2/report/pdf/{token}")
+async def download_pdf(token: str):
+    """Download a previously generated PDF report by token."""
+    file_path = _pdf_store.get(token)
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="PDF not found or expired")
+    return FileResponse(
+        path=file_path,
+        media_type="application/pdf",
+        filename="report.pdf"
+    )
+
+
+_BOOTSTRAP_CSS_URL = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+_BOOTSTRAP_CSS: str | None = None
+
+
+def _get_bootstrap_css() -> str:
+    """Fetch and cache Bootstrap CSS for PDF rendering."""
+    global _BOOTSTRAP_CSS
+    if _BOOTSTRAP_CSS is None:
+        import urllib.request
+        with urllib.request.urlopen(_BOOTSTRAP_CSS_URL) as resp:
+            _BOOTSTRAP_CSS = resp.read().decode("utf-8")
+        logger.info("Bootstrap CSS fetched and cached for PDF rendering")
+    return _BOOTSTRAP_CSS
+
+
+_PDF_PAGE_CSS = """
+@page {
+    size: A4 landscape;
+    margin: 12mm 10mm;
+}
+body {
+    font-size: 11px;
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.table-container {
+    margin-bottom: 16px;
+}
+h2 {
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+thead th, tbody th {
+    background-color: #dbeafe !important;
+    color: #1e3a5f;
+}
+"""
+
+
+def _generate_pdf(html_content: str) -> str:
+    """Render HTML string to a PDF temp file, return the file path."""
+    from weasyprint import HTML
+    full_html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>{_get_bootstrap_css()}</style>
+<style>{_PDF_PAGE_CSS}</style>
+</head>
+<body>{html_content}</body>
+</html>"""
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    HTML(string=full_html).write_pdf(tmp.name)
+    return tmp.name
+
+
 @app.post("/v2/report", response_class=HTMLResponse)
 @app.post("/v2/consolidated-report", response_class=HTMLResponse)
 async def generate_consolidated_report_v2(request: Request, request_data: ConsolidatedReportRequest):
@@ -201,11 +278,17 @@ async def generate_consolidated_report_v2(request: Request, request_data: Consol
         
         table_configs = get_table_configs("all")
         tables = report_service.build_report_tables(request_data, table_configs)
-        
+
+        # Generate PDF and store with a token
+        raw_html = templates.get_template("report.html").render({"tables": tables, "request": request})
+        token = str(uuid.uuid4())
+        _pdf_store[token] = _generate_pdf(raw_html)
+        pdf_url = str(request.url_for("download_pdf", token=token))
+
         return templates.TemplateResponse(
             request=request,
             name="report.html",
-            context={"tables": tables}
+            context={"tables": tables, "pdf_url": pdf_url}
         )
     except Exception as e:
         logger.error(f"Error generating consolidated report V2: {e}")
@@ -242,11 +325,17 @@ async def generate_specific_report_v2(request: Request, report_type: str, reques
             raise HTTPException(status_code=404, detail=f"Report type '{report_type}' not found")
         
         tables = report_service.build_report_tables(request_data, table_configs)
-        
+
+        # Generate PDF and store with a token
+        raw_html = templates.get_template("report.html").render({"tables": tables, "request": request})
+        token = str(uuid.uuid4())
+        _pdf_store[token] = _generate_pdf(raw_html)
+        pdf_url = str(request.url_for("download_pdf", token=token))
+
         return templates.TemplateResponse(
             request=request,
             name="report.html",
-            context={"tables": tables}
+            context={"tables": tables, "pdf_url": pdf_url}
         )
     except HTTPException:
         raise
